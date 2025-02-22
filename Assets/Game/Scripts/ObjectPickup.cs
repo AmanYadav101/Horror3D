@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEngine.Serialization;
@@ -15,7 +16,9 @@ public class ObjectPickup : MonoBehaviour
     public TwoBoneIKConstraint leftHandRigIK;
     public TwoBoneIKConstraint rightHandRigIK;
     public MultiAimConstraint chestRig;
+    public TextMeshProUGUI pickupText; // Assign in Inspector (TMP version)
     
+    private GameObject _highlightedObject;
     private GameObject _heldLeftObject;
     private Rigidbody _heldLeftRb;
     
@@ -28,7 +31,7 @@ public class ObjectPickup : MonoBehaviour
     
     void Update()
     {
-        DrawDebugRay();
+        HandlePickupUI();
         if (Input.GetKeyDown(KeyCode.E)) 
         {
             TryPickup();
@@ -63,6 +66,8 @@ public class ObjectPickup : MonoBehaviour
                 }
                 
             }
+            pickupText.gameObject.SetActive(false);
+
         }
     }
 
@@ -121,7 +126,24 @@ public class ObjectPickup : MonoBehaviour
         }
         
     }
+    void HandlePickupUI()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, pickupRange, pickupLayer))
+        {
+            if (hit.collider.CompareTag("Pickup_Lamp") || hit.collider.CompareTag("Pickup_Pistol"))
+            {
+                _highlightedObject = hit.collider.gameObject;
+                if(_heldObjects.Contains(_highlightedObject)) return;
+                pickupText.text = "Press E to pick up " + _highlightedObject.name + "\n Q to drop.";
+                pickupText.gameObject.SetActive(true);
+                return;
+            }
+        }
 
+        _highlightedObject = null;
+        pickupText.gameObject.SetActive(false);
+    }
     void DrawDebugRay()
     {
         Vector3 rayOrigin = cam.transform.position;
